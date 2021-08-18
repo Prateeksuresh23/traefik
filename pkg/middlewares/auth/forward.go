@@ -1,10 +1,12 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"regexp"
@@ -98,8 +100,13 @@ func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 
 func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), fa.name, forwardedTypeName))
-
-	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, nil)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	forwardReq, err := http.NewRequest(http.MethodGet, fa.address, bytes.NewReader(body))
 	tracing.LogRequest(tracing.GetSpan(req), forwardReq)
 	if err != nil {
 		logMessage := fmt.Sprintf("Error calling %s. Cause %s", fa.address, err)
