@@ -37,6 +37,7 @@ type Middleware struct {
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty" export:"true"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" export:"true"`
+	ForwardReq        *ForwardReq        `json:"forwardReq,omitempty" toml:"forwardReq,omitempty" yaml:"forwardReq,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 }
@@ -130,6 +131,16 @@ type ErrorPage struct {
 
 // ForwardAuth holds the http forward authentication configuration.
 type ForwardAuth struct {
+	Address                  string     `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	TLS                      *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	TrustForwardHeader       bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
+	AuthResponseHeaders      []string   `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
+	AuthResponseHeadersRegex string     `json:"authResponseHeadersRegex,omitempty" toml:"authResponseHeadersRegex,omitempty" yaml:"authResponseHeadersRegex,omitempty" export:"true"`
+	AuthRequestHeaders       []string   `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
+}
+
+// ForwardReq holds the http forward authentication configuration.
+type ForwardReq struct {
 	Address                  string     `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	TLS                      *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	TrustForwardHeader       bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
