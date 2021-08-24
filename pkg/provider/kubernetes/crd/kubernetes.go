@@ -209,6 +209,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		forwardReq, err := createForwardReqMiddleware(client, middleware.Namespace, middleware.Spec.ForwardReq)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading forward Req middleware: %v", err)
+			continue
+		}
+
 		errorPage, errorPageService, err := p.createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
@@ -263,6 +269,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
 			Plugin:            plugin,
+			ForwardReq:        forwardReq,
 		}
 	}
 
@@ -467,6 +474,51 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
+		Address:                  auth.Address,
+		TrustForwardHeader:       auth.TrustForwardHeader,
+		AuthResponseHeaders:      auth.AuthResponseHeaders,
+		AuthResponseHeadersRegex: auth.AuthResponseHeadersRegex,
+		AuthRequestHeaders:       auth.AuthRequestHeaders,
+	}
+
+	if auth.TLS == nil {
+		return forwardAuth, nil
+	}
+
+	forwardAuth.TLS = &dynamic.ClientTLS{
+		CAOptional:         auth.TLS.CAOptional,
+		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
+	}
+
+	if len(auth.TLS.CASecret) > 0 {
+		caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
+		}
+		forwardAuth.TLS.CA = caSecret
+	}
+
+	if len(auth.TLS.CertSecret) > 0 {
+		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load auth secret: %w", err)
+		}
+		forwardAuth.TLS.Cert = authSecretCert
+		forwardAuth.TLS.Key = authSecretKey
+	}
+
+	return forwardAuth, nil
+}
+
+func createForwardReqMiddleware(k8sClient Client, namespace string, auth *v1alpha1.ForwardReq) (*dynamic.ForwardReq, error) {
+	if auth == nil {
+		return nil, nil
+	}
+	if len(auth.Address) == 0 {
+		return nil, fmt.Errorf("forward authentication requires an address")
+	}
+
+	forwardAuth := &dynamic.ForwardReq{
 		Address:                  auth.Address,
 		TrustForwardHeader:       auth.TrustForwardHeader,
 		AuthResponseHeaders:      auth.AuthResponseHeaders,

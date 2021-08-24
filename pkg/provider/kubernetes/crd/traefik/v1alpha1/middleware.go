@@ -46,6 +46,7 @@ type MiddlewareSpec struct {
 	Retry             *Retry                         `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType           `json:"contentType,omitempty"`
 	Plugin            map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
+	ForwardReq        *ForwardReq                    `json:"forwardReq,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -88,6 +89,16 @@ type DigestAuth struct {
 
 // ForwardAuth holds the http forward authentication configuration.
 type ForwardAuth struct {
+	Address                  string     `json:"address,omitempty"`
+	TrustForwardHeader       bool       `json:"trustForwardHeader,omitempty"`
+	AuthResponseHeaders      []string   `json:"authResponseHeaders,omitempty"`
+	AuthResponseHeadersRegex string     `json:"authResponseHeadersRegex,omitempty"`
+	AuthRequestHeaders       []string   `json:"authRequestHeaders,omitempty"`
+	TLS                      *ClientTLS `json:"tls,omitempty"`
+}
+
+// ForwardReq holds the http forward authentication configuration.
+type ForwardReq struct {
 	Address                  string     `json:"address,omitempty"`
 	TrustForwardHeader       bool       `json:"trustForwardHeader,omitempty"`
 	AuthResponseHeaders      []string   `json:"authResponseHeaders,omitempty"`
