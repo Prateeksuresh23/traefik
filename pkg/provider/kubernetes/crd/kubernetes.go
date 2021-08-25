@@ -518,7 +518,7 @@ func createForwardReqMiddleware(k8sClient Client, namespace string, auth *v1alph
 		return nil, fmt.Errorf("forward authentication requires an address")
 	}
 
-	forwardAuth := &dynamic.ForwardReq{
+	forwardReq := &dynamic.ForwardReq{
 		Address:                  auth.Address,
 		TrustForwardHeader:       auth.TrustForwardHeader,
 		AuthResponseHeaders:      auth.AuthResponseHeaders,
@@ -527,10 +527,10 @@ func createForwardReqMiddleware(k8sClient Client, namespace string, auth *v1alph
 	}
 
 	if auth.TLS == nil {
-		return forwardAuth, nil
+		return forwardReq, nil
 	}
 
-	forwardAuth.TLS = &dynamic.ClientTLS{
+	forwardReq.TLS = &dynamic.ClientTLS{
 		CAOptional:         auth.TLS.CAOptional,
 		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 	}
@@ -540,7 +540,7 @@ func createForwardReqMiddleware(k8sClient Client, namespace string, auth *v1alph
 		if err != nil {
 			return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
 		}
-		forwardAuth.TLS.CA = caSecret
+		forwardReq.TLS.CA = caSecret
 	}
 
 	if len(auth.TLS.CertSecret) > 0 {
@@ -548,11 +548,11 @@ func createForwardReqMiddleware(k8sClient Client, namespace string, auth *v1alph
 		if err != nil {
 			return nil, fmt.Errorf("failed to load auth secret: %w", err)
 		}
-		forwardAuth.TLS.Cert = authSecretCert
-		forwardAuth.TLS.Key = authSecretKey
+		forwardReq.TLS.Cert = authSecretCert
+		forwardReq.TLS.Key = authSecretKey
 	}
 
-	return forwardAuth, nil
+	return forwardReq, nil
 }
 
 func loadCASecret(namespace, secretName string, k8sClient Client) (string, error) {
